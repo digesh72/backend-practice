@@ -51,16 +51,22 @@ const userSchema = new Schema(
         timestamps: true
     }
 )
+
+//By using bcrypt we are hashing password
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next()
 
     this.password = bcrypt.hash(this.password, 10)
     next()
 })
+
+//we are checking password
 userSchema.methods.isPasswordCorrect = async function (password) {
     return await bcrypt.compare(password, this.password)
 }
 
+
+//Using jwt token we are creating generating access token
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign(
         {
@@ -74,6 +80,8 @@ userSchema.methods.generateAccessToken = function () {
     }
     )
 }
+
+//JWT token which refresh the token
 userSchema.methods.generateRefreshToken = function () {
     return jwt.sign(
         {
