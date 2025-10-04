@@ -257,8 +257,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is missing")
     }
-    console.log(oldAvatarUrl)
 
+    const oldAvatarUrl = req.user?.avatar;
+    console.log(oldAvatarUrl)
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     if (!avatar.url) {
@@ -271,10 +272,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         }
     }, { new: true }).select("-password")
 
-    const oldAvatarUrl = req.user?.avatar;
-    if (oldAvatarUrl) {
-        await removeOnCloudinary(oldAvatarUrl)
+
+    if (!oldAvatarUrl) {
+        throw new ApiError(400, "Old avatar url is missing")
     }
+    await removeOnCloudinary(oldAvatarUrl)
 
     return res.status(200)
         .json(new ApiResponse(400, user, "Avatar updated Successfully."))
