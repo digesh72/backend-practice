@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { ApiError } from "../utils/ApiError.js"
 import { User } from "../models/user.model.js"
-import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { removeOnCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { request } from "express"
 import { useInsertionEffect } from "react"
@@ -239,7 +239,7 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
         throw new ApiError(400, "All field required")
     }
 
-    const user = User.findByIdAndUpdate(req.user?._id,
+    const user = await User.findByIdAndUpdate(req.user?._id,
         {
             $set: {
                 fullname: fullname, email: email
@@ -257,6 +257,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     if (!avatarLocalPath) {
         throw new ApiError(400, "Avatar file is missing")
     }
+    console.log(oldAvatarUrl)
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 
@@ -269,6 +270,11 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
             avatar: avatar.url
         }
     }, { new: true }).select("-password")
+
+    const oldAvatarUrl = req.user?.avatar;
+    if (oldAvatarUrl) {
+        await removeOnCloudinary(oldAvatarUrl)
+    }
 
     return res.status(200)
         .json(new ApiResponse(400, user, "Avatar updated Successfully."))
